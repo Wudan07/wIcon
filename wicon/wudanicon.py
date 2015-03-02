@@ -1,4 +1,8 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2015 Brad Newbold (wudan07 [at] gmail.com)
+# See LICENSE for details.
+# wudanicon.py
+#
 """wIcon library:
 	many functions being moved from here to sub-functions
 """
@@ -10,7 +14,6 @@
 #import gzip
 #from PIL import Image
 #from handy import *
-#from common import *
 from common import *
 from selection import *
 from glyph import glyphstr_get, glyphstr_monospace, glyphstr_length

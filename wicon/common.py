@@ -1,4 +1,8 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2015 Brad Newbold (wudan07 [at] gmail.com)
+# See LICENSE for details.
+# common.py
+#
 """wIcon library:
 	Common functions
 """
@@ -11,7 +15,6 @@ from PIL import Image
 #from selection import SelCoord
 #from wicon.handy import *
 #from selection import *
-
 #global values
 oldFashioned = False
 selsaveCrunch = False

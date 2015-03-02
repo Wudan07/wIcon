@@ -1,4 +1,8 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2015 Brad Newbold (wudan07 [at] gmail.com)
+# See LICENSE for details.
+# glyph.py
+#
 """wIcon library:
 	glyph provides GlyphObject
 """

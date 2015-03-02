@@ -1,4 +1,8 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2015 Brad Newbold (wudan07 [at] gmail.com)
+# See LICENSE for details.
+# handy.py
+#
 """wIcon library:
 
 """

@@ -1,4 +1,8 @@
-#!/c/Python26/python.exe
+# -*- coding: utf-8 -*-
+# Copyright (c) 2015 Brad Newbold (wudan07 [at] gmail.com)
+# See LICENSE for details.
+# font.py
+#
 from common import file_exists, str_match, str_match_end, str_strip_end, str_strip_newline
 from handy import file_open_in, file_open_out
 from selection import getselsize

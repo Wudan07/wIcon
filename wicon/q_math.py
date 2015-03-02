@@ -1,4 +1,8 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2015 Brad Newbold (wudan07 [at] gmail.com)
+# See LICENSE for details.
+# q_math.py
+#
 """wIcon library:
 	q_math.py: Vector Functions and other Math Goodies.
 	Many functions here are ported, or strongly based on versions found in Quake3 source release, which is GPL, but are

@@ -1,7 +1,7 @@
-#!/usr/bin/python
-## raster.py Brad Newbold;
-# version 0.0.1a
-# attempts to extract files from capcom .arc files and write them out with appropriate file extensions
+# -*- coding: utf-8 -*-
+# Copyright (c) 2015 Brad Newbold (wudan07 [at] gmail.com)
+# See LICENSE for details.
+# raster.py
 # todo: must check to make sure we're not overwriting files?
 #
 
