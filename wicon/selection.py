@@ -18,7 +18,7 @@ def getselsize(srcpath):
 	"""
 	srcsel = selection_get(srcpath)
 	if len(srcsel.coords) == 0:
-		return None
+		return [1,1]
 	_max = [None, None]
 	for sc in srcsel.coords:
 		for i in range(0, 2):
@@ -427,6 +427,10 @@ class SelectionObject:
 		
 		print('_min %d,%d' % (_min[0], _min[1]))
 		print('_max %d,%d' % (_max[0], _max[1]))
+		print 'numcoords %d' % (len(self.coords))
+		if len(self.coords) == 0:
+			print 'TRIED TO SAVE %s, no COORDS!' % self.name
+			return None
 		
 		bounds = [_max[0]-_min[0], _max[1]-_min[1]]
 		white = Image.new('RGBA', bounds, color)
