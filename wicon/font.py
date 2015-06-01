@@ -6,7 +6,7 @@
 from common import file_exists, str_match, str_match_end, str_strip_end, str_strip_newline
 from handy import file_open_in, file_open_out
 from selection import getselsize
-from wudanicon import image_operation, line_to_vars
+from wudanicon import ImageOperation, line_to_vars
 
 
 class FontGlyphObject:
@@ -29,8 +29,8 @@ class FontGlyphObject:
 		dat = 'font/%s/%04d.txt' % (self.font, self.imgnum)
 		if file_exists(path):
 			self.selname = 'glyph%04d' % self.imgnum
-			#image_operation('selsquare %s %s cm 232 0 4' % (self.selname,path))
-			image_operation('selsquare %s %s' % (self.selname, path))
+			#ImageOperation('selsquare %s %s cm 232 0 4' % (self.selname,path))
+			ImageOperation('selsquare %s %s' % (self.selname, path))
 			self.size = getselsize(self.selname)
 			#print 'Load Glyph sel(%s) size %s' % (self.selname, str(self.size))
 			self.ofs = [0, 0]
@@ -64,7 +64,7 @@ class FontGlyphObject:
 			#print self.size
 			#print sel
 			#print ofs
-			image_operation('selappend %s %s of %d %d bounds' % (self.selname, sel, ofs[0]+self.ofs[0], ofs[1]+self.ofs[1]))
+			ImageOperation('selappend %s %s of %d %d bounds' % (self.selname, sel, ofs[0]+self.ofs[0], ofs[1]+self.ofs[1]))
 			#image_operation('selappend %s %s of %d %d bounds' (self.selname,sel,ofs[0]+self.ofs[0],ofs[1]+self.ofs[1]))
 			if _debug:
 				print 'BLIT INFO ---'
@@ -186,8 +186,8 @@ class FontObject:
 		return data
 	
 	def dump(self, selname):
-		image_operation('selblock %s 0 0 800 20 0 0 0 255' % selname)
+		ImageOperation('selblock %s 0 0 800 20 0 0 0 255' % selname)
 		ofs = [5, 5]
 		for glyph in self.glyphs:
 			ofs[0] = glyph.blit(selname, ofs)
-		image_operation('selsave %s font_trial.png' % selname)
+		ImageOperation('selsave %s font_trial.png' % selname)

@@ -323,6 +323,32 @@ class VariableObject():
 		return False
 
 
+def selobj_retrieve_data(selname):
+	data = []
+
+	mysel = selection_find(selname)
+	if mysel is None:
+		return data
+
+	sz = getselsize(selname)
+
+	for j in range(0, sz[1]):
+		data.append([])
+		for i in range(0, sz[0]):
+			data[j].append(None)
+
+	for sc in mysel.coords:
+		valid = True
+		for i in range(0, 2):
+			if sc.xy[i] < 0:
+				valid = False
+			elif sc.xy[i] >= sz[i]:
+				valid = False
+			if valid is True:
+				data[sc.xy[1]][sc.xy[0]] = sc.color
+	return data
+
+
 class ImageOperation():
 	def __init__(self, line):
 		items = line_to_vars(line)
@@ -334,7 +360,7 @@ class ImageOperation():
 		cmdstr = ''
 		for peice in self.peices:
 			cmdstr += str(peice) + ' '
-		print 'ImageOperation: %s' % cmdstr
+		#print 'ImageOperation: %s' % cmdstr
 
 		found = False
 		command = self.peices[0]
@@ -1635,7 +1661,6 @@ class ImageOperation():
 					#offset
 					if debug_this:
 						print "OFFSET"
-					#try:
 					ofs_x = self.get_peice(i+1, _TYPE_Integer)
 					ofs_y = self.get_peice(i+2, _TYPE_Integer)
 					if (ofs_x is not None) and (ofs_y is not None):
@@ -1662,6 +1687,7 @@ class ImageOperation():
 						colc = [col_r, col_g, col_b]
 						if debug_this:
 							print 'COLOR [%d %d %d]' % (colc[0], colc[1], colc[2])
+							print colc
 						i += 3
 					else:
 						if debug_this:
@@ -1674,8 +1700,8 @@ class ImageOperation():
 			print 'Error(selappend): offset is None'
 			return
 
-		print 'SELAPPEND source is %s' % srcpath
-		print 'SELAPPEND destination is %s' % dstpath
+		#print 'SELAPPEND source is %s' % srcpath
+		#print 'SELAPPEND destination is %s' % dstpath
 		#print scale
 		#print scale_do
 		#print _min
@@ -1695,6 +1721,8 @@ class ImageOperation():
 		for selc in srcsel.coords:
 			if _debug is True:
 				print '--- COORDS'
+			#if colc is not None:
+			#	print 'WTF GUYS'
 			target_color = [0, 0, 0, 255]
 			if colc is None:
 				for i in range(0, 3):
@@ -1706,6 +1734,7 @@ class ImageOperation():
 					target_color[i] = colc[i] * (float(selc.color[i]/255.0))
 			#target_color = [0, 0, 0, 255]
 			if _debug is True:
+				print '!!!'
 				print colc
 				print selc.color
 				print target_color
@@ -1742,31 +1771,23 @@ class ImageOperation():
 		#srcsel = None
 		#imo_dst = None
 
-		try:
-			srcpath = self.peices[1]
-		except:
+		srcpath = self.get_peice(1, _TYPE_String)
+		power = [self.get_peice(2, _TYPE_Integer), self.get_peice(3, _TYPE_Integer)]
+		color = [self.get_peice(4, _TYPE_Integer), self.get_peice(5, _TYPE_Integer), self.get_peice(6, _TYPE_Integer)]
+		alpha = self.get_peice(7, _TYPE_Integer)
+		xsize = self.get_peice(8, _TYPE_Integer)
+		xmark = self.get_peice(9, _TYPE_Integer)
+		if srcpath is None:
 			srcpath = ''
-		try:
-			power = [int(self.peices[2]), int(self.peices[3])]
-		except:
+		if power[0] is None or power[1] is None:
 			power = [1, 1]
-		try:
-			color = [int(self.peices[4]), int(self.peices[5]), int(self.peices[6])]
-		except:
+		if color[0] is None or color[1] is None or color[2] is None:
 			color = [255, 255, 255]
-		try:
-			alpha = int(self.peices[7])
-			color.append(alpha)
-		except:
-			color.append(255)
-		try:
-			xsize = int(self.peices[8])
-		except:
+		if alpha is None:
+			alpha = 255
+		color.append(alpha)
+		if xsize is None:
 			xsize = 1
-		try:
-			xmark = int(self.peices[9])
-		except:
-			xmark = None
 		xm = False
 		if xmark is not None:
 			xm = True
@@ -1806,10 +1827,7 @@ class ImageOperation():
 		""" options are [selectionName]
 		calls SelectionObject.wipe(), which obliterates the contents of the SelectionObject.
 		"""
-		try:
-			srcpath = self.peices[1]
-		except:
-			srcpath = ''
+		srcpath = self.get_peice(1, _TYPE_String)
 
 		srcsel = selection_get(srcpath)
 		srcsel.wipe()
@@ -1835,7 +1853,7 @@ class ImageOperation():
 	def op_selbounds(self):
 		""" Return
 		"""
-		debug_this = True
+		debug_this = False
 		power = [0, 0]
 		#print 'ok selbounds (%s)' % (str(self.peices))
 		#try:
@@ -1912,7 +1930,7 @@ class ImageOperation():
 		else:
 			sel_min = [0, 0]
 			sel_max = [None, None]
-		print 'MIN %s MAX %s' % (sel_min, sel_max)
+		#print 'MIN %s MAX %s' % (sel_min, sel_max)
 
 		i = 3
 		while i < len(self.peices):
@@ -1969,12 +1987,12 @@ class ImageOperation():
 		except:
 			return
 
-		print '--- SELSQUARE ---'
-		print imgpath
-		print srcbox
-		print sel_min
-		print sel_max
-		print ofs
+		#print '--- SELSQUARE ---'
+		#print imgpath
+		#print srcbox
+		#print sel_min
+		#print sel_max
+		#print ofs
 
 		for i in range(0, 2):
 			if sel_max[i] is None:
@@ -2044,38 +2062,24 @@ class ImageOperation():
 						if sc is not None:
 							srcsel.coord_add(sc)
 				zed += 1
-		print 'SELSQUARE %s len coords %d' % (srcpath, len(srcsel.coords))
+		#print 'SELSQUARE %s len coords %d' % (srcpath, len(srcsel.coords))
 
 	def op_selblock(self):
 		""" Return
 		"""
-		try:
-			srcpath = self.peices[1]
-		except:
-			srcpath = ''
-		try:
-			start = [int(self.peices[2]), int(self.peices[3])]
-		except:
-			start = [0, 0]
-		try:
-			size = [int(self.peices[4]), int(self.peices[5])]
-		except:
-			size = [0, 0]
-		try:
-			color = [int(self.peices[6]), int(self.peices[7]), int(self.peices[8])]
-		except:
-			color = [255, 255, 255]
-		try:
-			alpha = int(self.peices[9])
+		srcpath = self.get_peice(1, _TYPE_String)
+		start = [self.get_peice(2, _TYPE_Integer), self.get_peice(3, _TYPE_Integer)]
+		size = [self.get_peice(4, _TYPE_Integer), self.get_peice(5, _TYPE_Integer)]
+		color = [self.get_peice(6, _TYPE_Integer), self.get_peice(7, _TYPE_Integer), self.get_peice(8, _TYPE_Integer)]
+		alpha = self.get_peice(9, _TYPE_Integer)
+		if alpha is None:
+			color.append(255)
+		else:
 			color.append(alpha)
-		except:
-			pass
-		try:
-			radius = float(self.peices[10])
-		except:
-			radius = None
+		radius = self.get_peice(10, _TYPE_Float)
 		#print color
-
+		#print 'SELBLOCK: %s' % (srcpath)
+		#print 'SELBLOCK: %s' % (str(color))
 		srcsel = selection_get(srcpath)
 		srcsel.block(start, size, radius, color)
 
@@ -2091,11 +2095,11 @@ class ImageOperation():
 		except:
 			imgpath = ''
 		try:
-			_min = int(self.peices[3])
 			_max = int(self.peices[4])
 		except:
 			#no pixels selected
 			return
+			_min = int(self.peices[3])
 
 		srcsel = selection_get(srcpath)
 
