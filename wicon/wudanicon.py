@@ -21,8 +21,11 @@ from glyph import glyphstr_get, glyphstr_monospace, glyphstr_length
 #from q_math import *
 
 
+### used in skoo process
 def skoo_filler_colors(colors):
-	""" Return
+	"""
+	:param colors:
+	:return:
 	"""
 	colen = len(colors)
 	trues = []
@@ -62,8 +65,12 @@ def skoo_filler_colors(colors):
 	print 'ok filled colors!'
 
 
+### is coord on 'X', return True, else False
 def xmatch(coord, mark):
-	""" Return
+	"""
+	:param coord:
+	:param mark:
+	:return:
 	"""
 	if coord[0] > mark[0]+1 or coord[0] < mark[0]-1:
 		return False
@@ -82,6 +89,7 @@ def xmatch(coord, mark):
 	return False
 
 
+### resize an image to within a maximum
 def max_size(image, _max_sz, method=3):
 	""" im = max_size(im, (_max_szX, _max_szY), method = Image.BICUBIC)
 
@@ -101,28 +109,53 @@ def max_size(image, _max_sz, method=3):
 		return image.resize((int((float(_max_sz[1])*im_aspect) + 0.5), _max_sz[1]), method)
 
 
+### get image size
 def dump_imagesize(path):
-	""" Return
+	"""
+	:param path:
+	:return:
 	"""
 	src = Image.open(path)
 	return src.size
 
 
+### put a dot on a selection
 def tiny_dot(sel, x, y, color=None):
-	""" Return
+	"""
+	:param sel:
+	:param x:
+	:param y:
+	:param color:
+	:return:
 	"""
 	if color is None:
 		color = [0, 0, 0, 255]
 	ImageOperation('seladdmark %s %d %d %d %d %d %d 0' % (sel, x, y, color[0], color[1], color[2], color[3]))
 
 
+### add a dot to a selection
 def adddot(selection, coord, color=None, mark=0):
+	"""
+	:param selection:
+	:param coord:
+	:param color:
+	:param mark:
+	:return:
+	"""
 	if color is None:
 		color = [64, 64, 64, 128]
 	ImageOperation('seladdmark %s %d %d %d %d %d %d %d' % (selection, coord[0], coord[1], color[0], color[1], color[2], color[3], mark))
 
 
+### add a line to a selection
 def addline(selection, v1, v2, color=None):
+	"""
+	:param selection:
+	:param v1:
+	:param v2:
+	:param color:
+	:return:
+	"""
 	if color is None:
 		color = [64, 64, 64, 128]
 	#global fScale
@@ -145,7 +178,14 @@ def addline(selection, v1, v2, color=None):
 		adddot(selection, v3, color)
 
 
+### add a polygon to a selection
 def addpolygon(selection, verts, color=None):
+	"""
+	:param selection:
+	:param verts:
+	:param color:
+	:return:
+	"""
 	if color is None:
 		color = [64, 64, 64, 128]
 	if len(verts) < 2:
@@ -161,8 +201,16 @@ def addpolygon(selection, verts, color=None):
 	addline(selection, vec2copy(lv), vec2copy(cv), color)
 
 
+### add a letter to a selection
 def draw_letter(sel, glyph, pos, color=None, dr=None, rev=None):
-	""" Return
+	"""
+	:param sel:
+	:param glyph:
+	:param pos:
+	:param color:
+	:param dr:
+	:param rev:
+	:return:
 	"""
 	if color is None:
 		color = [0, 0, 0, 255]
@@ -190,8 +238,15 @@ def draw_letter(sel, glyph, pos, color=None, dr=None, rev=None):
 	return glyph.flash
 
 
+### draw a string on a selection
 def draw_string(sel, _str, pos, color=None, mono=False):
-	""" Return
+	"""
+	:param sel:
+	:param _str:
+	:param pos:
+	:param color:
+	:param mono:
+	:return:
 	"""
 	if color is None:
 		color = [0, 0, 0, 255]
@@ -212,8 +267,12 @@ def draw_string(sel, _str, pos, color=None, mono=False):
 		yk += 10
 
 
+### get the size that a string would be using
 def string_box(a, mono=False):
-	""" Return
+	"""
+	:param a:
+	:param mono:
+	:return:
 	"""
 	#xk = 0
 	#yk = 0
@@ -232,8 +291,18 @@ def string_box(a, mono=False):
 	return [xz, yz]
 		
 
+### add a block of text to a selection
 def text_block(sel, val, pos, color=None, bgcolor=None, margin=None, radius=0.0, mono=False):
-	""" Return
+	"""
+	:param sel:
+	:param val:
+	:param pos:
+	:param color:
+	:param bgcolor:
+	:param margin:
+	:param radius:
+	:param mono:
+	:return:
 	"""
 	if color is None:
 		color = [0, 0, 0, 255]
@@ -261,12 +330,47 @@ def text_block(sel, val, pos, color=None, bgcolor=None, margin=None, radius=0.0,
 	if color[3] > 0:
 			draw_string(sel, val, [bpos[0]+margin[0]/2, bpos[1]+margin[1]/2], color, mono)
 
+
+### retrieve coords from a selection
+def selobj_retrieve_data(selname):
+	"""
+	:param selname:
+	:return:
+	"""
+	data = []
+
+	mysel = selection_find(selname)
+	if mysel is None:
+		return data
+
+	sz = getselsize(selname)
+
+	for j in range(0, sz[1]):
+		data.append([])
+		for i in range(0, sz[0]):
+			data[j].append(None)
+
+	for sc in mysel.coords:
+		valid = True
+		for i in range(0, 2):
+			if sc.xy[i] < 0:
+				valid = False
+			elif sc.xy[i] >= sz[i]:
+				valid = False
+			if valid is True:
+				data[sc.xy[1]][sc.xy[0]] = sc.color
+	return data
+
+
 _TYPE_String = 0
 _TYPE_Integer = 1
 _TYPE_Float = 2
 
 
+### wIcon attempt to introduce types in to text parsing
 class VariableObject():
+	"""
+	"""
 	def __init__(self, a):
 		self.type = _TYPE_String
 		negative = False
@@ -323,32 +427,23 @@ class VariableObject():
 		return False
 
 
-def selobj_retrieve_data(selname):
-	data = []
-
-	mysel = selection_find(selname)
-	if mysel is None:
-		return data
-
-	sz = getselsize(selname)
-
-	for j in range(0, sz[1]):
-		data.append([])
-		for i in range(0, sz[0]):
-			data[j].append(None)
-
-	for sc in mysel.coords:
-		valid = True
-		for i in range(0, 2):
-			if sc.xy[i] < 0:
-				valid = False
-			elif sc.xy[i] >= sz[i]:
-				valid = False
-			if valid is True:
-				data[sc.xy[1]][sc.xy[0]] = sc.color
-	return data
+### get var from list of type
+def get_var(peices, num, _asrt=None, default=None):
+	"""
+		retrieve peices num of type _assrt
+	"""
+	if len(peices) > num:
+		if _asrt is None:
+			return peices[num].val
+		else:
+			if peices[num].type == _asrt:
+				return peices[num].val
+			else:
+				print 'SEEK TYPE %d, FOUND %d' % (_asrt, peices[num].type)
+	return default
 
 
+### Workhorse of wIcon
 class ImageOperation():
 	def __init__(self, line):
 		items = line_to_vars(line)
@@ -357,9 +452,9 @@ class ImageOperation():
 			vo = VariableObject(item)
 			self.peices.append(vo)
 
-		cmdstr = ''
-		for peice in self.peices:
-			cmdstr += str(peice) + ' '
+		#cmdstr = ''
+		#for peice in self.peices:
+		#	cmdstr += str(peice) + ' '
 		#print 'ImageOperation: %s' % cmdstr
 
 		found = False
@@ -465,21 +560,15 @@ class ImageOperation():
 			line += '%s ' % peice
 		return str_strip_end(line, ' ')
 
-	def get_peice(self, num, _asrt=None):
+	### calls get_var
+	def get_peice(self, num, _asrt=None, default=None):
 		"""
 			retrieve peices num of type _assrt
 
 		"""
-		if len(self.peices) > num:
-			if _asrt is None:
-				return self.peices[num].val
-			else:
-				if self.peices[num].type == _asrt:
-					return self.peices[num].val
-				else:
-					print 'SEEK TYPE %d, FOUND %d' % (_asrt, self.peices[num].type)
-		return None
+		return get_var(self.peices, num, _asrt, default)
 
+	### sets image object to a string (path or name of file)
 	def op_setobj(self):
 		"""
 			function needs self.peices to contain 2 strings,
@@ -487,15 +576,9 @@ class ImageOperation():
 			the second is the value it will be set to.
 		"""
 		imo_src = None
-		srcpath = None
-		dstpath = None
 
-		if len(self.peices) >= 2:
-			if self.peices[1].isstring():
-				srcpath = self.peices[1].val
-		if len(self.peices) >= 3:
-			if self.peices[2].isstring():
-				dstpath = self.peices[2].val
+		srcpath = self.get_peice(1, _TYPE_String, None)
+		dstpath = self.get_peice(2, _TYPE_String, None)
 
 		if srcpath is None:
 			print 'ERROR: op_setobj - srcpath is None COMMAND: %s' % self.peices_to_str()
@@ -506,7 +589,7 @@ class ImageOperation():
 
 		if file_is_image(srcpath) is not True:
 			imo_src = imageobject_get(srcpath)
-			srcpath = imo_src.path
+			#srcpath = imo_src.path
 
 		if file_is_image(dstpath) is not True:
 			imo_dst = imageobject_get(dstpath)
@@ -525,18 +608,9 @@ class ImageOperation():
 		image_keep = None
 		#imo_src = None
 
-		try:
-			imgpath = self.peices[1]
-		except:
-			imgpath = ''
-		try:
-			noiseval = float(self.peices[2])
-		except:
-			noiseval = 0.5
-		try:
-			targval = self.peices[3]
-		except:
-			targval = 'default'
+		imgpath = self.get_peice(1, _TYPE_String, '')
+		noiseval = self.get_peice(2, _TYPE_Float, 0.5)
+		targval = self.get_peice(3, _TYPE_String, 'default')
 
 		if file_is_image(imgpath) is not True:
 			imo_src = imageobject_get(imgpath)
@@ -569,18 +643,9 @@ class ImageOperation():
 		image_keep = None
 		imo_src = None
 
-		try:
-			imgpath = self.peices[1]
-		except:
-			imgpath = ''
-		try:
-			bleachval = float(self.peices[2])
-		except:
-			bleachval = 0.5
-		try:
-			targval = self.peices[3]
-		except:
-			targval = 'default'
+		imgpath = self.get_peice(1, _TYPE_String, '')
+		bleachval = self.get_peice(2, _TYPE_Float, 0.5)
+		targval = self.get_peice(3, _TYPE_String, 'default')
 
 		if file_is_image(imgpath) is not True:
 			imo_src = imageobject_get(imgpath)
@@ -616,6 +681,9 @@ class ImageOperation():
 		imgpath = ''
 		targval = 'default'
 
+		imgpath = self.get_peice(1, _TYPE_String, '')
+		targval = self.get_peice(2, _TYPE_String, 'default')
+
 		if len(self.peices) >= 2:
 			if self.peices[1].isstring():
 				imgpath = self.peices[1].val
@@ -648,37 +716,20 @@ class ImageOperation():
 		if image_keep is not None:
 			image_keep.set_path(result)
 
+	### set up for calling image_tone_apply
 	def op_tone(self):
 		""" Return
 		"""
 		image_keep = None
 		imo_src = None
+		srcpath = ''
 		color = [0, 0, 0]
 
-		try:
-			imgpath = self.peices[1]
-		except:
-			imgpath = ''
-		try:
-			bleachval = float(self.peices[2])
-		except:
-			bleachval = 0.5
-		try:
-			color[0] = float(self.peices[3])
-		except:
-			color[0] = 0.5
-		try:
-			color[1] = float(self.peices[4])
-		except:
-			color[1] = 1.0
-		try:
-			color[2] = float(self.peices[5])
-		except:
-			color[2] = 1.0
-		try:
-			targval = self.peices[6]
-		except:
-			targval = 'default'
+
+		imgpath = self.get_peice(1, _TYPE_String, '')
+		bleachval = self.get_peice(2, _TYPE_Float, 0.5)
+		color = [self.get_peice(3, _TYPE_Float, 0.5), self.get_peice(4, _TYPE_Float, 0.5), self.get_peice(5, _TYPE_Float, 0.5)]
+		targval = self.get_peice(6, _TYPE_String, 'default')
 
 		if file_is_image(imgpath) is not True:
 			imo_src = imageobject_get(imgpath)
@@ -704,39 +755,20 @@ class ImageOperation():
 		if image_keep is not None:
 			image_keep.set_path(result)
 
-
+	### sets up for calling image_scotch_apply
 	def op_scotch(self):
 		""" Return
 		"""
 		image_keep = None
 		imo_src = None
+		srcpath = ''
 		color = [0, 0, 0]
 
-		try:
-			imgpath = self.peices[1]
-		except:
-			imgpath = ''
-		#try:
-		#	bleachval = float(self.peices[2])
-		#except:
-		#	bleachval = float(255)
-		try:
-			color[0] = float(self.peices[2])
-		except:
-			color[0] = 0.5
-		try:
-			color[1] = float(self.peices[3])
-		except:
-			color[1] = 1.0
-		try:
-			color[2] = float(self.peices[4])
-		except:
-			color[2] = 1.0
-		try:
-			targval = self.peices[5]
-		except:
-			targval = 'default'
+		imgpath = self.get_peice(1, _TYPE_String, '')
+		color = [self.get_peice(2, _TYPE_Float, 0.5), self.get_peice(3, _TYPE_Float, 0.5), self.get_peice(4, _TYPE_Float, 0.5)]
+		targval = self.get_peice(5, _TYPE_String, 'default')
 
+		## NEED TO REVIEW
 		#bsqrd = bleachval * bleachval
 		#targetlen = math.sqrt(bsqrd+bsqrd+bsqrd)
 		#lumilen = math.sqrt(color[0]*color[0]+color[1]*color[1]+color[2]+color[2])
@@ -768,7 +800,7 @@ class ImageOperation():
 		if image_keep is not None:
 			image_keep.set_path(result)
 
-
+	### sets up for calling image_skoo_apply
 	def op_skoo(self):
 		""" Return
 		"""
@@ -777,22 +809,10 @@ class ImageOperation():
 		imo_dst = None
 		colors = []
 
-		try:
-			colpath = self.peices[1]
-		except:
-			colpath = ''
-		try:
-			numslice = int(self.peices[2])
-		except:
-			numslice = 4
-		try:
-			imgpath = self.peices[3]
-		except:
-			imgpath = ''
-		try:
-			dstpath = self.peices[4]
-		except:
-			dstpath = 'default'
+		colpath = self.get_peice(1, _TYPE_String, '')
+		numslice = self.get_peice(2, _TYPE_Integer, 4)
+		imgpath = self.get_peice(3, _TYPE_String, '')
+		dstpath = self.get_peice(4, _TYPE_String, 'default')
 
 		if file_is_image(imgpath) is not True:
 			imo_src = imageobject_get(imgpath)
@@ -807,6 +827,8 @@ class ImageOperation():
 		if file_is_image(dstpath) is not True:
 			imo_dst = imageobject_get(dstpath)
 			dstpath = imo_dst.path
+
+		## NEED TO REVIEW
 		#bsqrd = bleachval * bleachval
 		#targetlen = math.sqrt(bsqrd+bsqrd+bsqrd)
 		#lumilen = math.sqrt(color[0]*color[0]+color[1]*color[1]+color[2]+color[2])
@@ -855,7 +877,7 @@ class ImageOperation():
 		if imo_dst is not None:
 			imo_dst.set_path(result)
 
-
+	### test / development
 	def op_funkyfresh(self):
 		""" Return
 		"""
@@ -863,14 +885,8 @@ class ImageOperation():
 		#imo_src = None
 		#color = [0, 0, 0]
 
-		try:
-			imgpath = self.peices[1]
-		except:
-			imgpath = ''
-		try:
-			targval = self.peices[2]
-		except:
-			targval = 'default'
+		imgpath = self.get_peice(1, _TYPE_String, '')
+		targval = self.get_peice(2, _TYPE_String, 'default')
 
 		power = 256
 
@@ -966,6 +982,7 @@ class ImageOperation():
 				image_keep.set_path(outimg)
 			return outimg
 
+	### returns a rotated image
 	def op_rotate(self):
 		""" Return
 		"""
@@ -974,18 +991,9 @@ class ImageOperation():
 		imo_res = None
 		#power = 0
 
-		try:
-			imgpath = self.peices[1]
-		except:
-			imgpath = ''
-		try:
-			power = float(self.peices[2])
-		except:
-			power = 0.0
-		try:
-			targval = self.peices[3]
-		except:
-			targval = 'default'
+		imgpath = self.get_peice(1, _TYPE_String, '')
+		power = self.get_peice(2, _TYPE_Float, 0.0)
+		targval = self.get_peice(3, _TYPE_String, 'default')
 
 		if file_is_image(imgpath) is not True:
 			imo_src = imageobject_get(imgpath)
@@ -1051,10 +1059,7 @@ class ImageOperation():
 	def op_resize(self):
 		""" options are [-i ImagePath] [-w imageWidth] [-h imageHeight] [-o outpath] [-m resizeMode]
 		"""
-		#imo_add = None
-		#imo_src = None
 		imo_res = None
-		#power = 0
 		imgpath = None
 		targval = None
 		wide_val = None
@@ -1064,20 +1069,21 @@ class ImageOperation():
 
 		i = 0
 		while i < len(self.peices):
-			if str_match(self.peices[i], '-i'):
-				imgpath = self.peices[i+1]
+			op = self.get_peice(1, _TYPE_String, '')
+			if str_match(op, '-i'):
+				imgpath = self.get_peice(i+1, _TYPE_String, None)
 				i += 1
-			elif str_match(self.peices[i], '-w'):
-				wide_val = int(self.peices[i+1])
+			elif str_match(op, '-w'):
+				wide_val = self.get_peice(i+1, _TYPE_Integer, None)
 				i += 1
-			elif str_match(self.peices[i], '-h'):
-				high_val = int(self.peices[i+1])
+			elif str_match(op, '-h'):
+				high_val = self.get_peice(i+1, _TYPE_Integer, None)
 				i += 1
-			elif str_match(self.peices[i], '-o'):
-				targval = self.peices[i+1]
+			elif str_match(op, '-o'):
+				targval = self.get_peice(i+1, _TYPE_String, None)
 				i += 1
-			elif str_match(self.peices[i], '-m'):
-				mode_val = self.peices[i+1]
+			elif str_match(op, '-m'):
+				mode_val = self.get_peice(i+1, _TYPE_String, None)
 				i += 1
 			i += 1
 
@@ -1495,25 +1501,26 @@ class ImageOperation():
 
 		i = 0
 		while i < len(self.peices):
-			if str_match(self.peices[i], '-i'):
+			op = self.get_peice(1, _TYPE_String, '')
+			if str_match(op, '-i'):
 				imgpath = self.peices[i+1]
 				i += 1
-			elif str_match(self.peices[i], '-l'):
+			elif str_match(op, '-l'):
 				zc[0] = float(self.peices[i+1])
 				zc[1] = float(self.peices[i+2])
 				#zoom_val = True
 				i += 2
-			#elif str_match(self.peices[i], '-o'):
+			#elif str_match(op, '-o'):
 			#	targval = self.peices[i+1]
 			#	i += 1
-			elif str_match(self.peices[i], '-m'):
+			elif str_match(op, '-m'):
 				mode = self.peices[i+1]
 				i += 1
-			elif str_match(self.peices[i], '-z'):
+			elif str_match(op, '-z'):
 				zoomstart = float(self.peices[i+1])
 				zoomfinish = float(self.peices[i+2])
 				i += 2
-			elif str_match(self.peices[i], '-ct'):
+			elif str_match(op, '-ct'):
 				zoomsteps = int(self.peices[i+1])
 				i += 1
 			i += 1
