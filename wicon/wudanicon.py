@@ -144,7 +144,7 @@ def adddot(selection, coord, color=None, mark=0):
 	"""
 	if color is None:
 		color = [64, 64, 64, 128]
-	ImageOperation('seladdmark %s %d %d %d %d %d %d %d' % (selection, coord[0], coord[1], color[0], color[1], color[2], color[3], mark))
+	ImageOperation('seladdmark %s %d %d %d %d %d %d %d 0' % (selection, coord[0], coord[1], color[0], color[1], color[2], color[3], mark))
 
 
 ### add a line to a selection
@@ -199,6 +199,208 @@ def addpolygon(selection, verts, color=None):
 		lv = verts[i]
 	cv = verts[0]
 	addline(selection, vec2copy(lv), vec2copy(cv), color)
+
+
+class Bounds2d():
+	def __init__(self):
+		self.mn = [None, None]
+		self.mx = [None, None]
+
+	def bounds_set(self, coord):
+		for i in range(0, 2):
+			if self.mn[i] is None:
+				self.mn[i] = coord[i] - 1.0
+				self.mx[i] = coord[i] + 1.0
+			if coord[i] < self.mn[i]:
+				self.mn[i] = coord[i] - 1.0
+			if coord[i] > self.mx[i]:
+				self.mx[i] = coord[i] + 1.0
+
+
+class ScratchPad():
+	def __init__(self, st_pos, space, dims):
+		self.dims = dims
+		#self.loc = []
+		self.st_pos = vec2copy(st_pos)
+		self.space = space
+		self.pad = []
+		self.cols = []
+		self.rows = []
+
+		for j in range(0, dims[1]):
+			#self.loc.append([])
+			self.pad.append([])
+			for i in range(0, dims[0]):
+				#self.loc[j].append()
+				self.pad[j].append(0)
+
+	def add_mark(self, pos):
+		#print '--- ADD MARK %f %f---' % (pos[0], pos[1])
+		#print 'start pos %f %f' % (self.st_pos[0], self.st_pos[1])
+		diff = vec2sub(pos, self.st_pos)
+		x = int(diff[0])
+		y = int(diff[1])
+		#print pos
+		#print x
+		#print y
+		if(x >= 0) and (x < self.dims[0]):
+			pass
+		else:
+			return
+		if(y >= 0) and (y < self.dims[1]):
+			pass
+		else:
+			return
+		#print 'OK FOR ADDING MARK'
+		self.pad[y][x] += 1
+
+	def dump(self, targsel, topval, c=[0, 0, 0, 255]):
+		stpos = [int(self.st_pos[0]), int(self.st_pos[1])]
+		ftv = float(topval)
+		#print '--- PAD DUMP ---'
+		for j in range(0, self.dims[1]):
+			line = ''
+			for i in range(0, self.dims[0]):
+				color = [c[0], c[1], c[2], c[3]]
+				val = self.pad[j][i]
+				#line += '%02d ' % (self.pad[j][i])
+				if val > 0:
+					if val < topval:
+						scale = (float(val) / ftv) * float(c[3])
+						#color[0] = int(scale)
+						#color[1] = int(scale)
+						#color[2] = int(scale)
+						color[3] = int(scale)
+						#print color[3]
+						line += '%02x ' % color[3]
+					else:
+						line += '%02x ' % color[3]
+					adddot(targsel, [i+stpos[0], j+stpos[1]], color)
+			#print line
+
+
+### draw a pretty, anti-aliased line
+class PrettyLine():
+	def __init__(self, selname, apos, bpos, awide, bwide, color=None, cuts=4.0):
+		if color is None:
+			color = [32, 32, 32, 255]
+
+		self.apos = vec2copy(apos)
+		self.bpos = vec2copy(bpos)
+		self.awide = awide
+		self.bwide = bwide
+		self.bb = Bounds2d()
+
+		self.line_diff = vec2sub(apos, bpos)
+		self.line_len = vec2len(self.line_diff)
+		#print 'line length is %f' % self.line_len
+		bounds_add = self.bwide
+		if self.awide > bounds_add:
+			bounds_add = self.awide
+		pvec = [bounds_add, bounds_add]
+
+		dvec = vec2sub(self.apos, pvec)
+		svec = vec2add(self.apos, pvec)
+		self.bb.bounds_set(dvec)
+		self.bb.bounds_set(svec)
+
+		dvec = vec2sub(self.bpos, pvec)
+		svec = vec2add(self.bpos, pvec)
+		self.bb.bounds_set(dvec)
+		self.bb.bounds_set(svec)
+
+		## now build me a matrix, shiny shiny
+		space = 1.0 / cuts
+		topval = int(cuts * cuts)
+		pstart = vec2copy(self.bb.mn)
+		pend = vec2copy(self.bb.mx)
+		pint = [int(pstart[0]), int(pstart[1])]
+		rint = [int(pend[0]), int(pend[1])]
+		#print 'pstart %f %f' % (pstart[0], pstart[1])
+		#print ' pint %d %d' % (pint[0], pint[1])
+		for i in range(0, 2):
+			fint = float(pint[i])
+			if fint < pstart[i]:
+				pint[i] -= 1
+			gint = float(rint[i])
+			if gint < pend[i]:
+				rint[i] += 1
+		pdims = [rint[0] - pint[0], rint[1] - pint[1]]
+		#print 'pdims %d %d' % (pdims[0], pdims[1])
+		#print 'pstart %f %f' % (pstart[0], pstart[1])
+		#print ' pint %d %d' % (pint[0], pint[1])
+		self.sp = ScratchPad([float(pint[0]), float(pint[1])], space, pdims)
+
+		#print pstart
+		#sp.add_mark([0.0, 1.0])
+		kpos = vec2copy(pstart)
+		lpos = vec2copy(pend)
+		ykeep = kpos[1]
+		myline = vec2normalize(self.line_diff)
+		mytang = vec2copy([-myline[1], myline[0]])
+		mdot = vec2dot(myline, myline)
+		#print 'mdot is %s' % mdot
+		while ykeep < lpos[1]:
+			xkeep = kpos[0]
+			while xkeep < lpos[0]:
+				mpos = [xkeep, ykeep]
+				mark = False
+				mdiff = vec2sub(mpos, self.apos)
+				mlen = vec2len(mdiff)
+
+				if mlen < self.awide:
+					mark = True
+				if mark is False:
+					mdiff = vec2sub(mpos, self.bpos)
+					mlen = vec2len(mdiff)
+					if mlen < self.bwide:
+						mark = True
+				if mark is False:
+					mdiff = vec2sub(self.apos, mpos)
+					#print mdiff
+					mdot = vec2dot(myline, mdiff)
+					if(mdot >= 0.0) and (mdot <= self.line_len):
+						dval = mdot
+						if self.line_len > 0.0:
+							dval = mdot / self.line_len
+						targ_thick = (self.bwide * dval) + (self.awide * (1.0 - dval))
+						mtan = vec2dot(mytang, mdiff)
+						if mtan < 0.0:
+							mtan = -mtan
+						if mtan < targ_thick:
+							#print 'MARK'
+							mark = True
+					#print mdot
+					#print line_len
+				if mark is True:
+					self.sp.add_mark(mpos)
+				xkeep += space
+			ykeep += space
+
+		self.sp.dump(selname, topval, color)
+
+
+### add a polygon to a selection
+def addprettypolygon(selection, verts, color=None):
+	"""
+	:param selection:
+	:param verts:
+	:param color:
+	:return:
+	"""
+	if color is None:
+		color = [64, 64, 64, 128]
+	if len(verts) < 2:
+		return
+	lv = verts[0]
+	#cv = verts[0]
+	for i in range(1, len(verts)):
+		cv = verts[i]
+		#print '(%s) line %s - %s (%s)' % (selection, lv, cv, color)
+		addline(selection, vec2copy(lv), vec2copy(cv), color)
+		lv = verts[i]
+	cv = verts[0]
+	PrettyLine(selection, vec2copy(lv), vec2copy(cv), 1.25, 1.25, color)
 
 
 ### add a letter to a selection

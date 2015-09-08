@@ -53,6 +53,9 @@ class SelCoord:
 		self.xy = coord
 		### set to color value, either 3 or 4 channels
 		self.color = color
+		if len(color) == 4:
+			if 0:
+				print ' %d %d - r(%d) g(%d) b(%d) a(%d)' % (self.xy[0], self.xy[1], self.color[0], self.color[1], self.color[2], self.color[3])
 		
 	def color_update(self, color):
 		""" Modifies self.color to provided value
@@ -402,6 +405,7 @@ class SelectionObject:
 		""" Saves the selection contents as outimg.
 		PIL / Pillow handles the writing of the file (obviously)
 		"""
+		debug_this = False
 		media_ct = 0
 		if outimg is None:
 			outimg = 'out%04d.png' % (media_ct+1)
@@ -424,10 +428,11 @@ class SelectionObject:
 		
 		if _min[0] is None or _min[1] is None:
 			return None
-		
-		print('_min %d,%d' % (_min[0], _min[1]))
-		print('_max %d,%d' % (_max[0], _max[1]))
-		print 'numcoords %d' % (len(self.coords))
+
+		if debug_this:
+			print('_min %d,%d' % (_min[0], _min[1]))
+			print('_max %d,%d' % (_max[0], _max[1]))
+			print 'numcoords %d' % (len(self.coords))
 		if len(self.coords) == 0:
 			print 'TRIED TO SAVE %s, no COORDS!' % self.name
 			return None
@@ -436,36 +441,64 @@ class SelectionObject:
 		white = Image.new('RGBA', bounds, color)
 		
 		for coord in self.coords:
-				#print('coord %d %d' % (coord.xy[0]-_min[0],coord.xy[1]-_min[1]))
-				#print('color %d %d %d' % (coord.color[0],coord.color[1],coord.color[2]))
-				power = [coord.xy[0]-_min[0], coord.xy[1]-_min[1]]
-				if (power[0] >= 0) and (power[0] < bounds[0]) and (power[1] >= 0) and (power[1] < bounds[1]):
-						if len(coord.color) <= 3:
-								white.putpixel((coord.xy[0]-_min[0], coord.xy[1]-_min[1]), (coord.color[0], coord.color[1], coord.color[2], 255))
-						else:
-								o_color = white.getpixel((coord.xy[0]-_min[0], coord.xy[1]-_min[1]))
-								#print o_color
-								color = coord.color
-								#print len(o_color)
-								#print len(color)
-								smooth = float(float(color[3]) / 255.0)
-								asmoth = 1.0 - smooth
-								src_color = None
-								dst_color = None
-								if len(o_color) == 3:
-									src_color = [int(float(o_color[0])*asmoth), int(float(o_color[1])*asmoth), int(float(o_color[2])*asmoth), 255]
-								elif len(o_color) == 4:
-									src_color = [int(float(o_color[0])*asmoth), int(float(o_color[1])*asmoth), int(float(o_color[2])*asmoth), int(float(o_color[3])*asmoth)]
-								if len(color) == 3:
-									dst_color = [int(float(color[0])*smooth), int(float(color[1])*smooth), int(float(color[2])*smooth), 255]
-								elif len(color) == 4:
-									dst_color = [int(float(color[0])*smooth), int(float(color[1])*smooth), int(float(color[2])*smooth), int(float(color[3])*smooth)]
-								#print src_color
-								#print dst_color
-								res_color = [src_color[0]+dst_color[0], src_color[1]+dst_color[1], src_color[2]+dst_color[2], src_color[3]+dst_color[3]]
-								#print res_color
-								white.putpixel((coord.xy[0]-_min[0], coord.xy[1]-_min[1]), (res_color[0], res_color[1], res_color[2], res_color[3]))
-								#print '%d %d - %d %d %d %d' % (coord.xy[0],coord.xy[1],coord.color[0],coord.color[1],coord.color[2],coord.color[3])
+			if debug_this:
+				print '-=> coord'
+			#print('coord %d %d' % (coord.xy[0]-_min[0],coord.xy[1]-_min[1]))
+			#print('color %d %d %d' % (coord.color[0],coord.color[1],coord.color[2]))
+			power = [coord.xy[0]-_min[0], coord.xy[1]-_min[1]]
+			if (power[0] >= 0) and (power[0] < bounds[0]) and (power[1] >= 0) and (power[1] < bounds[1]):
+				if len(coord.color) <= 3:
+					white.putpixel((coord.xy[0]-_min[0], coord.xy[1]-_min[1]), (coord.color[0], coord.color[1], coord.color[2], 255))
+				else:
+					o_color = white.getpixel((coord.xy[0]-_min[0], coord.xy[1]-_min[1]))
+					#print o_color
+					color = coord.color
+					res_color = [0,0,0,255]
+					opaque = True
+					if len(color) == 4:
+						if debug_this:
+							print ' SAVE %d %d - r(%d) g(%d) b(%d) a(%d)' % (coord.xy[0], coord.xy[1], color[0], color[1], color[2], color[3])
+							print len(o_color)
+							print ' ORIGINAL r(%d) g(%d) b(%d) a(%d)' % (o_color[0], o_color[1], o_color[2], o_color[3])
+						#print ' original = %d %d %d'
+						if color[3] < 255:
+							opaque = False
+
+					#print len(o_color)
+					#print len(color)
+					if opaque is False:
+						if debug_this:
+							print 'NON-OPAQUE'
+						smooth = float(float(color[3]) / 255.0)
+						asmoth = 1.0 - smooth
+						src_color = None
+						dst_color = None
+						if len(o_color) >= 3:
+							src_color = [int(float(o_color[0])*asmoth), int(float(o_color[1])*asmoth), int(float(o_color[2])*asmoth), 255]
+						if len(o_color) == 4:
+							src_color[3] = int(float(o_color[3])*asmoth)
+
+						if len(color) >= 3:
+							dst_color = [int(float(color[0])*smooth), int(float(color[1])*smooth), int(float(color[2])*smooth), 255]
+						if len(color) == 4:
+							dst_color[3] = int(float(color[3])*smooth)
+
+						res_color = [src_color[0]+dst_color[0], src_color[1]+dst_color[1], src_color[2]+dst_color[2], src_color[3]+dst_color[3]]
+
+						if debug_this:
+							print src_color
+							print dst_color
+							print res_color
+					else:
+						if len(color) >= 3:
+							res_color = [color[0], color[1], color[2], 255]
+						if len(color) == 4:
+							res_color[3] = color[3]
+
+					white.putpixel((coord.xy[0]-_min[0], coord.xy[1]-_min[1]), (res_color[0], res_color[1], res_color[2], res_color[3]))
+					#print '%d %d - %d %d %d %d' % (coord.xy[0],coord.xy[1],coord.color[0],coord.color[1],coord.color[2],coord.color[3])
+			if debug_this:
+				print ''
 		white.save(outimg)
 		return outimg
 

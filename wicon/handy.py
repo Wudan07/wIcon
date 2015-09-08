@@ -24,6 +24,12 @@ from common import *
 outputDebugMSGs = False
 
 
+def fabs(val):
+	if val < 0.0:
+		return -val
+	return val
+
+
 def redirect_stdout(filename):
 	if filename:  # Replace stdout by file
 		#print "os.close redirect_stdout"
